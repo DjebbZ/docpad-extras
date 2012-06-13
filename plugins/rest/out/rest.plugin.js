@@ -16,21 +16,30 @@
       RestPlugin.prototype.name = 'rest';
 
       RestPlugin.prototype.serverAfter = function(_arg, next) {
-        var docpad,
+        var config, docpad, server,
           _this = this;
-        docpad = _arg.docpad;
-        docpad.getServer().post(/./, function(req, res, next) {
-          if (_this.config.requireAuthentication && _this.docpad.getPlugin('authenticate').isMaintainer() === false) {
+        server = _arg.server;
+        docpad = this.docpad;
+        config = this.config;
+        server.post(/./, function(req, res, next) {
+          docpad.log("info", "Request url = " + req.url);
+          docpad.log("info", "Request body = " + (JSON.stringify(req.body, null, 4)));
+          if (config.requireAuthentication && docpad.getPlugin('authenticate').isMaintainer() === false) {
             res.send(405);
             return next();
           }
+          docpad.log("info", "Authentication OK or not needed");
+          docpad.log("info", "Documents collection = " + (JSON.stringify(docpad.getCollection('documents'), null, 4)));
           return docpad.getCollection('documents').findOne({
             url: req.url
           }, function(err, document) {
             var key, value, _ref;
+            docpad.log("info", "Searching document...");
+            docpad.log("info", "Error ? : " + (JSON.stringify(err, null, 4)));
             if (err) {
               return next(err);
             }
+            docpad.log("info", "Document found = " + (JSON.stringify(document, null, 4)));
             if (!document) {
               return next();
             }
